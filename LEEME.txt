@@ -1,0 +1,29 @@
+PLANO 3D - INSTITUTO (reconstrucción interpretativa)
+=====================================================
+
+Cómo abrirlo:
+1. Descomprime el .zip
+2. Haz doble clic en "plano3d.html" para abrirlo en tu navegador
+   (necesitas conexión a internet, ya que carga la librería Three.js
+   desde un CDN la primera vez).
+
+Controles dentro del plano 3D:
+- Clic izquierdo + arrastrar: rotar la cámara alrededor del edificio
+- Clic derecho + arrastrar: desplazar la vista
+- Rueda del mouse: acercar / alejar
+- En móvil: un dedo para rotar, dos dedos para hacer zoom
+
+Qué incluye:
+- Baño superior izquierdo (lavamanos + inodoro)
+- Sala grande con mostrador de madera y escritorio con persona
+- Cluster de baños centrales (duchas/lavamanos)
+- Sala vacía / pasillo superior
+- Sala superior derecha con escritorio, persona y ropero oscuro
+- Pasillo central que conecta todo el edificio
+- 5 habitaciones idénticas en la parte inferior, cada una con:
+  ropero claro, escritorio, silla, banqueta y ropero de madera
+
+Nota: es una reconstrucción esquemática basada en las proporciones
+del plano 2D que enviaste, no una réplica exacta a escala milimétrica.
+Si quieres que ajuste medidas, colores o agregue más detalle
+(puertas que se abran, texturas, etc.), dime y lo modifico.

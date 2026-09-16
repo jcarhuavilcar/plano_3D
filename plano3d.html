@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Plano 3D - Instituto</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#dfe7ec;font-family:Arial,Helvetica,sans-serif;}
+  #info{position:absolute;top:10px;left:10px;color:#223;background:rgba(255,255,255,0.9);padding:10px 14px;border-radius:10px;font-size:13px;max-width:300px;box-shadow:0 2px 8px rgba(0,0,0,.2);line-height:1.4}
+  #info b{display:block;margin-bottom:4px;font-size:15px}
+  canvas{display:block}
+</style>
+</head>
+<body>
+<div id="info"><b>Plano 3D del instituto</b>Click izquierdo + arrastrar: rotar<br>Click derecho + arrastrar: desplazar<br>Rueda del mouse: zoom</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+const S = 0.3;        // metros por unidad de grilla
+const WALL_H = 2.6;   // altura de muros (m)
+const WALL_T = 0.12;  // grosor de muros (m)
+const WALL_COLOR = 0xEDE7DE;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xdfe7ec);
+
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+const dl = new THREE.DirectionalLight(0xffffff, 0.75);
+dl.position.set(40, 70, 25);
+scene.add(dl);
+const dl2 = new THREE.DirectionalLight(0xffffff, 0.25);
+dl2.position.set(-30, 40, -20);
+scene.add(dl2);
+
+const group = new THREE.Group();
+scene.add(group);
+
+function box(w,h,d,color,x,y,z){
+  const geo = new THREE.BoxGeometry(Math.max(w,0.01), Math.max(h,0.01), Math.max(d,0.01));
+  const mat = new THREE.MeshStandardMaterial({color, roughness:0.85, metalness:0.05});
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x,y,z);
+  group.add(m);
+  return m;
+}
+function cyl(r,h,color,x,y,z){
+  const geo = new THREE.CylinderGeometry(r,r,h,20);
+  const mat = new THREE.MeshStandardMaterial({color, roughness:0.7});
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x,y,z);
+  group.add(m);
+  return m;
+}
+function person(gx,gy,shirtColor){
+  const x = gx*S, z = gy*S;
+  cyl(0.20, 0.9, shirtColor, x, 0.45, z);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.13,16,16), new THREE.MeshStandardMaterial({color:0xe0b088}));
+  head.position.set(x, 0.98, z);
+  group.add(head);
+}
+
+// piso rectangular (coords de grilla)
+function floorSlab(x0,y0,x1,y1,color){
+  const w=(x1-x0)*S, d=(y1-y0)*S;
+  const cx=(x0+x1)/2*S, cz=(y0+y1)/2*S;
+  box(w,0.05,d,color, cx,0.025,cz);
+}
+
+// habitacion con piso + 4 muros perimetrales (sin recortes de puerta, estilo esquematico)
+function room(x0,y0,x1,y1,floorColor){
+  floorSlab(x0,y0,x1,y1,floorColor);
+  const w=(x1-x0)*S, d=(y1-y0)*S;
+  const cx=(x0+x1)/2*S, cz=(y0+y1)/2*S;
+  box(w+WALL_T, WALL_H, WALL_T, WALL_COLOR, cx, WALL_H/2, y0*S);
+  box(w+WALL_T, WALL_H, WALL_T, WALL_COLOR, cx, WALL_H/2, y1*S);
+  box(WALL_T, WALL_H, d+WALL_T, WALL_COLOR, x0*S, WALL_H/2, cz);
+  box(WALL_T, WALL_H, d+WALL_T, WALL_COLOR, x1*S, WALL_H/2, cz);
+}
+
+// ================= SECCION SUPERIOR =================
+room(0,0,4,3.5, 0xBFE3EE);      // bano superior izq. (lavamanos)
+room(0,3.5,4,7, 0xBFE3EE);      // bano superior izq. (inodoro)
+room(4,0,23,10, 0xE7D9BE);      // sala grande con mostrador
+room(23,0,32,10, 0xBFE3EE);     // cluster de banos
+room(32,0,45,10, 0xF3F3F1);     // pasillo/sala vacia superior
+room(45,0,58,10, 0xE7D9BE);     // sala superior derecha
+
+// elementos de bano (izquierda)
+cyl(0.6,0.9,0xffffff, 2*S,0.45, 1.6*S);
+cyl(0.45,0.9,0xffffff, 2*S,0.45, 5.2*S);
+
+// elementos del cluster de banos (centro)
+cyl(0.85,0.9,0xffffff, 24.5*S,0.45, 1.6*S);
+cyl(0.85,0.9,0xffffff, 24.5*S,0.45, 5*S);
+cyl(0.85,0.9,0xffffff, 24.5*S,0.45, 8.4*S);
+cyl(0.5,0.7,0xffffff, 28.5*S,0.35, 1*S);
+cyl(0.5,0.7,0xffffff, 29.8*S,0.35, 1*S);
+
+// mostrador largo + escritorio + persona (sala grande)
+box(16*S,1.0,2.2*S,0xA9702F, 15*S,0.5, 1.25*S);
+box(3*S,0.8,2.5*S,0xC98A4B, 19.5*S,0.4, 6.5*S);
+person(19.5, 7.2, 0xB5651D);
+
+// escritorio + persona + ropero oscuro (sala superior derecha)
+box(2.5*S,0.8,2.5*S,0xC98A4B, 46.5*S,0.4, 2*S);
+person(46.5, 2.6, 0x556B2F);
+box(2*S,2.4,10*S,0x5B3A21, 57*S,1.2, 5*S);
+
+// ================= PASILLO CENTRAL =================
+floorSlab(0,10,61,16, 0xF0EDE6);
+
+// ================= HABITACIONES INFERIORES (x5) =================
+const roomXs = [2,14,26,38,50];
+roomXs.forEach((x0,i)=>{
+  const x1 = x0+10.8;
+  room(x0,16,x1,26, 0xF7F2EA);
+  box(2*S,1.8,6*S,0xD9D9D9, (x0+2)*S,0.9, 21*S);     // ropero claro
+  box(4.5*S,0.8,2.5*S,0xB5651D, (x0+5.75)*S,0.4, 23.25*S); // escritorio
+  box(1*S,0.9,1*S,0x1F3A5F, (x0+6.5)*S,0.45, 25*S);  // silla azul
+  cyl(0.5*S,0.5,0x9A9A9A, (x0+5)*S,0.25, 25*S);      // banqueta gris
+  box(1.5*S,2.2,10*S,0xB8895B, (x0+9.75)*S,1.1, 21*S); // ropero de madera
+  if(i===0){
+    box(1*S,0.3,1*S,0x111111, (x0+10)*S,2.35, 16.5*S); // detalle esquina
+  }
+});
+
+// piso base general (referencia visual)
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(120,80),
+  new THREE.MeshStandardMaterial({color:0xc9d3d8, roughness:1})
+);
+ground.rotation.x = -Math.PI/2;
+ground.position.set(30*S*0+30, -0.03, 30*S*0+10);
+ground.position.set(9,-0.03,3.9);
+scene.add(ground);
+
+// =============== CAMARA Y CONTROLES (orbit manual) ===============
+const target = new THREE.Vector3(29*S, 1, 13*S);
+let radius = 30, theta = Math.PI/4, phi = Math.PI/3.1;
+
+function updateCamera(){
+  camera.position.set(
+    target.x + radius*Math.sin(phi)*Math.sin(theta),
+    target.y + radius*Math.cos(phi),
+    target.z + radius*Math.sin(phi)*Math.cos(theta)
+  );
+  camera.lookAt(target);
+}
+updateCamera();
+
+let dragging=false, panning=false, lastX=0, lastY=0;
+renderer.domElement.addEventListener('contextmenu', e=>e.preventDefault());
+renderer.domElement.addEventListener('mousedown', e=>{
+  dragging=true; panning = (e.button===2); lastX=e.clientX; lastY=e.clientY;
+});
+window.addEventListener('mouseup', ()=>{dragging=false;});
+window.addEventListener('mousemove', e=>{
+  if(!dragging) return;
+  const dx = e.clientX-lastX, dy = e.clientY-lastY;
+  lastX = e.clientX; lastY = e.clientY;
+  if(panning){
+    const panSpeed = 0.02;
+    const right = new THREE.Vector3(Math.cos(theta),0,-Math.sin(theta));
+    target.addScaledVector(right, -dx*panSpeed);
+    target.y += dy*panSpeed;
+  } else {
+    theta -= dx*0.006;
+    phi -= dy*0.006;
+    phi = Math.max(0.15, Math.min(Math.PI/2-0.03, phi));
+  }
+  updateCamera();
+});
+renderer.domElement.addEventListener('wheel', e=>{
+  radius += e.deltaY*0.02;
+  radius = Math.max(4, Math.min(100, radius));
+  updateCamera();
+  e.preventDefault();
+}, {passive:false});
+
+// soporte tactil basico (movil)
+let touchLastX=0,touchLastY=0,touchDist=0;
+renderer.domElement.addEventListener('touchstart', e=>{
+  if(e.touches.length===1){ touchLastX=e.touches[0].clientX; touchLastY=e.touches[0].clientY; }
+  else if(e.touches.length===2){
+    const dx=e.touches[0].clientX-e.touches[1].clientX;
+    const dy=e.touches[0].clientY-e.touches[1].clientY;
+    touchDist = Math.sqrt(dx*dx+dy*dy);
+  }
+}, {passive:true});
+renderer.domElement.addEventListener('touchmove', e=>{
+  if(e.touches.length===1){
+    const dx=e.touches[0].clientX-touchLastX, dy=e.touches[0].clientY-touchLastY;
+    touchLastX=e.touches[0].clientX; touchLastY=e.touches[0].clientY;
+    theta -= dx*0.006; phi -= dy*0.006;
+    phi = Math.max(0.15, Math.min(Math.PI/2-0.03, phi));
+    updateCamera();
+  } else if(e.touches.length===2){
+    const dx=e.touches[0].clientX-e.touches[1].clientX;
+    const dy=e.touches[0].clientY-e.touches[1].clientY;
+    const d = Math.sqrt(dx*dx+dy*dy);
+    radius += (touchDist-d)*0.05;
+    radius = Math.max(4, Math.min(100, radius));
+    touchDist = d;
+    updateCamera();
+  }
+  e.preventDefault();
+}, {passive:false});
+
+window.addEventListener('resize', ()=>{
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+function animate(){
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+animate();
+
+})();
+</script>
+</body>
+</html>
